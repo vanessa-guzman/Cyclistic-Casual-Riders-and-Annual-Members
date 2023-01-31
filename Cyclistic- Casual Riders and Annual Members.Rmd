@@ -1,0 +1,230 @@
+---
+title: 'Cyclistic: Casual Riders and Annual Members'
+output: html_document
+date: '2022-07-05'
+---
+
+# Cyclistic: Casual Riders and Annual Members
+
+## Loading Packages
+
+```{r Loading Packages}
+library(tidyverse)
+tidyverse_update() 
+library(dplyr)
+library(lubridate)
+```
+
+## Importing the Data
+
+The data can be located [here](https://divvy-tripdata.s3.amazonaws.com/index.html). The data analyzed was data from the past 12 months, made available before July 5th, 2022.
+
+```{r Importing the Data, 12 .csv files}
+Jun_2021 <- read.csv("202106-divvy-tripdata.csv")
+Jul_2021 <- read.csv("202107-divvy-tripdata.csv")
+Aug_2021 <- read.csv("202108-divvy-tripdata.csv")
+Sep_2021 <- read.csv("202109-divvy-tripdata.csv")
+Oct_2021 <- read.csv("202110-divvy-tripdata.csv")
+Nov_2021 <- read.csv("202111-divvy-tripdata.csv")
+Dec_2021 <- read.csv("202112-divvy-tripdata.csv")
+Jan_2022 <- read.csv("202201-divvy-tripdata.csv")
+Feb_2022 <- read.csv("202202-divvy-tripdata.csv")
+Mar_2022 <- read.csv("202203-divvy-tripdata.csv")
+Apr_2022 <- read.csv("202204-divvy-tripdata.csv")
+May_2022 <- read.csv("202205-divvy-tripdata.csv")
+```
+
+## Inspecting and Cleaning the Data Before Combining the Files
+
+The functions **colnames** and **str** will be used to ensure everything is consistent before combining the files.
+
+```{r colnames before combining}
+colnames(Jun_2021)
+colnames(Jul_2021)
+colnames(Aug_2021)
+colnames(Sep_2021) 
+colnames(Oct_2021)
+colnames(Nov_2021)
+colnames(Dec_2021)
+colnames(Jan_2022)
+colnames(Feb_2022)
+colnames(Mar_2022)
+colnames(Apr_2022)
+colnames(May_2022)
+```
+
+```{r str before combining}
+str(Jun_2021)
+str(Jul_2021)
+str(Aug_2021)
+str(Sep_2021)
+str(Oct_2021)
+str(Nov_2021)
+str(Dec_2021)
+str(Jan_2022)
+str(Feb_2022)
+str(Mar_2022)
+str(Apr_2022)
+str(May_2022)
+```
+
+All column names are consistent. The structure is also consistent, so we can move onto combining the 12 .csv files.
+
+## Combining all the .csv Files
+
+```{r combining the files}
+all_trips <- bind_rows(Jun_2021, Jul_2021, Aug_2021, Sep_2021, Oct_2021, Nov_2021, Dec_2021, Jan_2022, Feb_2022, Mar_2022, Apr_2022, May_2022)
+```
+
+## Inspecting and Cleaning the new table
+
+### Inspecting the new table
+
+```{r inspecting new table}
+colnames(all_trips)
+str(all_trips)
+dim(all_trips)
+summary(all_trips)
+```
+
+### Converting "started_at" and "ended_at" to date time
+
+We will need to calculate the ride length, in order to do so we need to convert the "started_at" and "ended_at" columns from character to date time using the as.POSIXlt function.
+
+```{r Converting “started_at” and “ended_at” to date time}
+all_trips$started_at <- as.POSIXlt(all_trips$started_at, format= "%Y-%m-%d %H:%M:%S")
+all_trips$ended_at <- as.POSIXlt(all_trips$ended_at, format = "%Y-%m-%d %H:%M:%S")
+```
+
+### Adding columns for month, day, year, and weekday
+
+```{r Adding columns for month, day, year, and weekday}
+all_trips$month <- format(as.Date(all_trips$started_at), "%m")
+all_trips$day <- format(as.Date(all_trips$started_at), "%d")
+all_trips$year <- format(as.Date(all_trips$started_at), "%Y")
+all_trips$day_of_week <- format(as.Date(all_trips$started_at), "%A")
+```
+
+### Calculating ride length
+
+```{r Calculating ride length}
+all_trips$ride_length <- difftime(all_trips$ended_at, all_trips$started_at) 
+```
+
+### Checking the datatype of "ride_length" column
+
+```{r}
+is.numeric("all_trips$ride_length")
+is.integer("all_trips$ride_length")
+is.character("all_trips$ride_length")
+```
+
+### Changing the datatype of "ride_length" column in order to aggregate in the future
+
+```{r}
+all_trips$ride_length <- as.numeric(as.character(all_trips$ride_length))
+```
+
+### Viewing trips where the length is less than zero or start location is HQ QR
+
+The table might include instances where the ride length was negative. It might also include instances where bikes were checked and taken out of the docks and checked. We want to check for this doing the following:
+
+```{r}
+all_trips[all_trips$start_station_name == "HQ QR" | all_trips$ride_length < 0, ]
+```
+
+### Creating new data frame, excluding rows where the start station is HQ QR and the ride length is less than zero
+
+We want to remove instances where start station is HQ QR and the ride length is less than zero.
+
+```{r Creating new dataframe}
+all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR" | all_trips$ride_length < 0), ]
+```
+
+### Inspecting all_trips_v2
+
+```{r}
+dim(all_trips) # to compare the number of rows to all_trips_v2
+dim(all_trips_v2)
+colnames(all_trips_v2)
+str(all_trips_v2)
+```
+
+## Analyzing the New Data Frame
+
+### Summary of the Data
+
+```{r Summary of the Data}
+summary(all_trips_v2$ride_length)
+```
+
+### Comparing Annual Members and Casual Riders
+
+```{r Comparing Member and Casual Riders}
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = mean)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = median)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = max)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = min)
+```
+
+### Seeing the average ride time by each day for members vs casual users
+
+```{r average ride time by each day1}
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual + all_trips_v2$day_of_week, FUN = mean)
+```
+
+The week days are out of order, so to list them in order (starting w/ Sunday)
+
+```{r ordering weekdays}
+all_trips_v2$day_of_week <- ordered(all_trips_v2$day_of_week, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+```
+
+Running the aggregate() function again.
+
+```{r average ride time by each day2- after weekday order is fixed}
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual + all_trips_v2$day_of_week, FUN = mean)
+```
+
+### Analyzing ridership data by type and weekday
+
+```{r Analyze ridership data by type and weekday}
+all_trips_v2 %>% mutate(weekday = wday(started_at, label = TRUE)) %>% group_by(member_casual, weekday) %>% summarize(number_of_rides = n(), average_duration = mean(ride_length)) %>% arrange(member_casual, weekday)
+```
+
+## Initial Visualizations
+
+### Number of Rides by Rider Type and Weekday
+
+```{r Number of Rides by Rider Type and Weekday}
+all_trips_v2 %>% mutate(weekday = wday(started_at, label = TRUE)) %>% group_by(member_casual, weekday) %>% summarize(number_of_rides = n(), average_duration = mean(ride_length)) %>% arrange(member_casual, weekday) %>% ggplot(aes(x=weekday, y=number_of_rides, fill=member_casual)) + geom_col(position = "dodge")
+```
+
+### Average Duration by Rider Type and Weekday
+
+```{r Average Duration by Rider Type and Weekday}
+all_trips_v2 %>% mutate(weekday = wday(started_at, label = TRUE)) %>% group_by(member_casual, weekday) %>% summarize(number_of_rides = n(), average_duration = mean(ride_length)) %>% arrange(member_casual, weekday) %>% ggplot(aes(x=weekday, y=average_duration, fill=member_casual)) + geom_col(position = "dodge")
+```
+
+## Exporting Data
+
+Exporting .csv files so that visualizations can be created in Tableau.
+
+### Rides and Duration By Weekday
+
+```{r}
+rides_and_dur_wd <- all_trips_v2 %>% mutate(weekday = wday(started_at, label = TRUE)) %>% group_by(member_casual, weekday) %>% summarize(number_of_rides = n(), average_duration = mean(ride_length)) %>% arrange(member_casual, weekday)
+write.csv(rides_and_dur_wd, file= "~/Desktop/Cyclistic- Casual Riders and Annual Members/rides_and_dur_wd.csv")
+```
+
+### Rides and Duration By Month
+
+```{r}
+rides_and_dur_m <- all_trips_v2 %>% mutate(month = month(started_at, label = TRUE)) %>% group_by(member_casual, month) %>% summarize(number_of_rides = n(), average_duration = mean(ride_length)) %>% arrange(member_casual, month)
+write.csv(rides_and_dur_m, file= "~/Desktop/Cyclistic- Casual Riders and Annual Members/rides_and_dur_m.csv")
+```
+
+### Links to Tableau and Presentation
+
+Tableau link [here](https://public.tableau.com/app/profile/vanessa4875/viz/Cyclistic-CasualRidersandAnnualMembers/RidesandDurationbyMonth).
+
+Presentation link [here](https://docs.google.com/presentation/d/1ejTlAbq0jKHqehNl-xy3gvIxocrw75MamVRbOUkZxnQ/edit#slide=id.g13b90827ecf_0_147).
