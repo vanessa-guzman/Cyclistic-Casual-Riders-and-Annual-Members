@@ -4,7 +4,7 @@ Cyclistic- Casual Riders and Annual Members
 
 # Cyclistic: Casual Riders and Annual Members
 
-## Installing Pacakges
+## Installing Packages
 
 ``` r
 install.packages('tidyverse', repos = "http://cran.us.r-project.org")
@@ -1527,5 +1527,5 @@ write.csv(rides_and_dur_m, file= "~/Desktop/Projects- PUBLIC/Cyclistic-Casual-Ri
 Tableau link
 [here](https://public.tableau.com/app/profile/vanessa4875/viz/Cyclistic-CasualRidersandAnnualMembers/RidesandDurationbyMonth).
 
-Presentation link
-[here](https://docs.google.com/presentation/d/1ejTlAbq0jKHqehNl-xy3gvIxocrw75MamVRbOUkZxnQ/edit#slide=id.g13b90827ecf_0_147).
+Presentation on 
+[Google Slides](https://docs.google.com/presentation/d/1ejTlAbq0jKHqehNl-xy3gvIxocrw75MamVRbOUkZxnQ/edit#slide=id.g13b90827ecf_0_147).
